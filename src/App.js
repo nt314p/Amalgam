@@ -1,25 +1,33 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState, useEffect } from 'react'
+import Notes from './components/Notes'
 
-function App() {
+const App = () => {
+
+  const [notes, setNotes] = useState(
+    [
+      {
+        id: 0,
+        title: "test 1",
+        content: "hiii"
+      },
+      {
+        id: 1,
+        title: "test 2",
+        content: "heya"
+      },
+      {
+        id: 2,
+        title: "test 3",
+        content: "hello!"
+      }
+    ]
+  )
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <Notes notes={notes} />
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
