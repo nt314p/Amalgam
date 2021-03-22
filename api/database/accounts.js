@@ -21,17 +21,21 @@ module.exports = {
         return await account.save();
     },
 
+    getById: async (id) => {
+        let account = await Account.findById(id);
+        account.hashedPassword = undefined;
+        return account;
+    },
+
+    deleteById: async (id) => {
+        await Account.findByIdAndDelete(id);
+    },
+
     getByUsername: async (username) => await Account.findOne({ "username": username }),
 
     login: async (username, password) => {
         let account = await Account.findOne({ "username": username });
         return await bcrypt.compare(password, account.hashedPassword);
-    },
-
-    getById: async (id) => {
-        let account = await Account.findById(id);
-        account.hashedPassword = undefined;
-        return account;
     },
 
     getNotebooks: async (id) => {

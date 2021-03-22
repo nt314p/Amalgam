@@ -10,11 +10,10 @@ const jwt_key = process.env.JWT_KEY;
 
 // Create new account
 router.post("/",
-    Validations.username,
-    Validations.name,
-    Validations.password,
-    Validations.isEmpty("hello?"),
-    checkValidation,
+    // Validations.username,
+    // Validations.name,
+    // Validations.password,
+    // checkValidation,
     async (req, res) => {
         try {
             if (!(await Accounts.isUniqueUsername())) {
@@ -59,6 +58,15 @@ router.get("/:id", async (req, res, next) => {
         next(err);
     }
 });
+
+router.delete("/:id", async (req, res, next) => {
+    try {
+        await Accounts.deleteById(req.params.id);
+        res.status(200).json({ message: "Account deleted" });
+    } catch (err) {
+        next(err);
+    }
+})
 
 // notebook middleware
 router.use("/:accountId/notebooks", notebookRoutes);
