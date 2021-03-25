@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
+import NoteContent from './components/NoteContent'
 import Notes from './components/Notes'
+import Sidebar from './components/Sidebar'
 
 const App = () => {
 
@@ -25,7 +27,15 @@ const App = () => {
 
   return (
     <div>
-      <Notes notes={notes} />
+      <div className="column left">
+        <Sidebar />
+      </div>
+      <div className="column middle">
+        <Notes notes={notes} notebookName="Cool Notebook" />
+      </div>
+      <div className="column right">
+        <NoteContent />
+      </div>
     </div>
   )
 }

@@ -29,7 +29,7 @@ app.use((req, res, next) => {
 app.post("/checkUniqueUsername", checkUniqueUsername);
 
 app.use("/accounts", accountRoutes);
-
+1
 app.use((req, res, next) => {
     const error = new Error("Not found");
     error.status = 404;
