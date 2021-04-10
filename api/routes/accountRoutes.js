@@ -20,6 +20,7 @@ router.post("/",
                 return res.status(422).json({ message: "Username already taken" });
             }
             let createdAccount = await Accounts.create(req.body);
+            createdAccount.hashedPassword = undefined;
             res.status(201).json({
                 message: "Account created",
                 createdAccount: createdAccount
