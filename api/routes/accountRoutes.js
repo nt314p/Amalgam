@@ -53,7 +53,6 @@ router.use("/:accountId", validateAccountId);
 router.get("/:id", async (req, res, next) => {
     try {
         let account = await Accounts.getById(req.params.id);
-        account.hashedPassword = undefined;
         res.status(200).json({ account });
     } catch (err) {
         next(err);
