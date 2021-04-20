@@ -10,10 +10,7 @@ const jwt_key = process.env.JWT_KEY;
 
 // Create new account
 router.post("/",
-    // Validations.username,
-    // Validations.name,
-    // Validations.password,
-    // checkValidation,
+    Validations.createAccount,
     async (req, res) => {
         try {
             if (!(await Accounts.isUniqueUsername())) {

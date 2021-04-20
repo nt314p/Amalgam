@@ -38,10 +38,14 @@ app.use((req, res, next) => {
 
 app.use((error, req, res, next) => {
     res.status(error.status || 500);
-    console.log(error);
-    res.json({
-        error // don't send error back in production
-    });
+    if (process.env.NODE_ENV == "development") console.log(error);
+    if (process.env.NODE_ENV != "production") {
+        res.json({
+            error
+        });
+    } else {
+        res.sendStatus(500);
+    }
 });
 
 async function checkUniqueUsername(req, res) {
