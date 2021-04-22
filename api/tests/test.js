@@ -155,26 +155,31 @@ describe('Account route validations', () => {
             .post('/accounts')
             .send({ username: "testaccount@88", name: "Mr. Test", password: "Aa1!" })
             .expect(422);
+        expect(res.body.error.validationErrors).toHaveLength(1);
 
         res = await request // lowercase
             .post('/accounts')
             .send({ username: "testaccount@88", name: "Mr. Test", password: "AA34567!" })
             .expect(422);
+        expect(res.body.error.validationErrors).toHaveLength(1);
 
         res = await request // uppercase
             .post('/accounts')
             .send({ username: "testaccount@88", name: "Mr. Test", password: "aa34567!" })
             .expect(422);
+        expect(res.body.error.validationErrors).toHaveLength(1);
 
         res = await request // number
             .post('/accounts')
             .send({ username: "testaccount@88", name: "Mr. Test", password: "abcdefg!" })
             .expect(422);
+        expect(res.body.error.validationErrors).toHaveLength(1);
 
         res = await request // symbol
             .post('/accounts')
             .send({ username: "testaccount@88", name: "Mr. Test", password: "Aa345678" })
             .expect(422);
+        expect(res.body.error.validationErrors).toHaveLength(1);
     });
 });
 
