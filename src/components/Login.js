@@ -3,12 +3,14 @@ import TextField from '@material-ui/core/TextField';
 import InputLabel from '@material-ui/core/InputLabel';
 import Container from '@material-ui/core/Container'
 import green from '@material-ui/core/colors/green';
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core';
 import { Card } from '@material-ui/core';
 import { CardContent } from '@material-ui/core';
 import { Typography } from '@material-ui/core';
 import { Button } from '@material-ui/core';
+import { Grid } from '@material-ui/core';
 import { useState, useEffect } from 'react'
+import InputField from './InputField';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -18,14 +20,53 @@ const useStyles = makeStyles((theme) => ({
     inputGroup: {
         paddingTop: 10,
     },
+    cardFullWidth: {
+        width: 280
+    },
+    cardContent: {
+        margin: 6
+    }
 }));
 
-const Login = ({ loggedIn, setToken, setLoggedIn }) => {
+const Login = ({ signUp, loggedIn, setToken, setLoggedIn }) => {
     const classes = useStyles();
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [signUpOption, setSignUpOption] = useState(signUp);
     const [loginMessage, setLoginMessage] = useState("");
+
+    const handleUpdateUsername = (e) => setUsername(e.target.value);
+    const handleUpdatePassword = (e) => setPassword(e.target.value);
+    const toggleSignUpOption = (value) => setSignUpOption(value);
+
+    const validateUsername = async (value) => {
+        if (value.length == 0) return "Username cannot be empty";
+        const unique = await checkUniqueUsername(value);
+        if (!unique) return "Username is already taken";
+    };
+
+    const validatePassword = async (value) => {
+        if (value.length == 0) return "Password cannot be empty";
+        if (value.length < 8) return "Password must be at least 8 characters long";
+        if (!value.match(/[a-z]/)) return "Password must contain at least one lowercase letter";
+        if (!value.match(/[A-Z]/)) return "Password must contain at least one uppercase letter";
+        if (!value.match(/[1-9]/)) return "Password must contain at least one number";
+        if (!value.match(/[$-/:-?{-~!"^_`\[\]]/)) return "Password must contain at least one symbol";
+    }
+
+    const checkUniqueUsername = async (username) => {
+        const res = await fetch('http://localhost:4000/checkUniqueUsername', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username })
+        });
+
+        const data = await res.json();
+        return data.result;
+    }
 
     const login = async () => {
         const res = await fetch('http://localhost:4000/accounts/login', {
@@ -48,25 +89,22 @@ const Login = ({ loggedIn, setToken, setLoggedIn }) => {
     };
 
     return (
-        <div>
-            <Container maxWidth="sm" className={classes.root}>
-                <Card>
-                    <CardContent>
-                        <Typography color="textPrimary" style={{ fontSize: 20 }}>
+        <Container className={classes.root}>
+            <Grid
+                container
+                direction="column"
+                justify="center"
+                alignItems="center"
+            >
+                <Card className={classes.cardFullWidth}>
+                    <CardContent className={classes.cardContent}>
+                        <Typography color="textPrimary" variant="h5" align="center" style={{ marginBottom: 10 }}>
                             Login
                         </Typography>
-                        <div className={classes.inputGroup}>
-                            <InputLabel>Username</InputLabel>
-                            <TextField id="username-field" type="text" value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                variant="outlined" margin="dense" />
-                        </div>
-                        <div className={classes.inputGroup}>
-                            <InputLabel>Password</InputLabel>
-                            <TextField id="password-field" type="password" value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                variant="outlined" margin="dense" />
-                        </div>
+
+                        <InputField name="Username" />
+                        <InputField name="Password" type="password" />
+
                         <div className={classes.root} style={{ paddingTop: 10 }}>
                             <Button
                                 fullWidth
@@ -83,15 +121,27 @@ const Login = ({ loggedIn, setToken, setLoggedIn }) => {
                         </div>
                         {loginMessage === "" ? <></> :
                             (<Typography
+                                variant="body2"
                                 color={(loggedIn ? "primary" : "error")}
-                                style={{ fontSize: 14, paddingTop: 10 }}>
+                                style={{ paddingTop: 10 }}>
                                 {loginMessage}
                             </Typography>)
                         }
                     </CardContent>
                 </Card>
-            </Container>
-        </div>
+                <Card className={classes.cardFullWidth} style={{ marginTop: 16 }}>
+                    <CardContent className={classes.cardContent} style={{ padding: 4 }}>
+                        <Grid container direction="row" justify="center" alignItems="center">
+                            <Typography variant="body2" display="inline"
+                            >
+                                New to Amalgam?
+                                </Typography>
+                            <Button style={{ marginLeft: 10, display: "inline", textTransform: "capitalize", padding: 2 }} variant="outlined" color="primary">Sign up</Button>
+                        </Grid>
+                    </CardContent>
+                </Card>
+            </Grid>
+        </Container>
     )
 }
 

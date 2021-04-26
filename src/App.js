@@ -11,7 +11,7 @@ const App = () => {
 
   return (
     <div>
-      <Login loggedIn={loggedIn} setToken={setToken} setLoggedIn={setLoggedIn} />
+      <Login signUp={false} loggedIn={loggedIn} setToken={setToken} setLoggedIn={setLoggedIn} />
     </div>
   )
 }
