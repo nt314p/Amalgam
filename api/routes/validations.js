@@ -40,7 +40,7 @@ module.exports = {
 module.exports.createAccount = [
     body("username").exists().withMessage("Username property cannot be empty")
         .isString()
-        .custom(value => !/\s/.test(value)).withMessage("Username cannot include spaces"),
+        .custom(value => !/\s/.test(value)).withMessage("Username cannot contain spaces"),
 
     body("name").exists().withMessage("Name property cannot be empty"),
 

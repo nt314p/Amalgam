@@ -1,8 +1,5 @@
-import { useState, useEffect } from 'react'
-import NoteContent from './components/NoteContent'
-import Notes from './components/Notes'
-import Sidebar from './components/Sidebar'
-import Login from './components/Login'
+import { useState } from 'react';
+import Login from './components/Login';
 
 const App = () => {
 

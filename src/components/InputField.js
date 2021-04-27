@@ -3,20 +3,21 @@ import React from 'react'
 import { useState } from 'react'
 import { TextField, InputLabel } from '@material-ui/core';
 
-const InputField = ({ name, value, type, validate }) => {
-
+const InputField = ({ name, value, type, validate, onChange }) => {
     const [val, setValue] = useState(value);
     const [isValid, setIsValid] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
 
     const handleUpdateValue = (e) => {
-        const value = e.target.value;
-        setValue(value);
-        validate(value).then(message => {
+        console.log(onChange);
+        const updatedVal = e.target.value;
+        setValue(updatedVal);
+        validate(updatedVal).then(message => {
             if (message === undefined) message = "";
             setErrorMessage(message);
-            setIsValid(message.length == 0);
+            setIsValid(message.length === 0);
         });
+        onChange(updatedVal);
     };
 
     return (
@@ -38,7 +39,8 @@ InputField.defaultProps = {
     name: "",
     value: "",
     type: "text",
-    validate: () => ""
+    validate: () => Promise.resolve(""),
+    onChange: () => { }
 }
 
 export default InputField
