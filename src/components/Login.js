@@ -22,7 +22,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-const Login = ({ signUp: signUpDisplay, loggedIn, setToken, setLoggedIn }) => {
+const Login = ({ history, signUp: signUpDisplay, loggedIn, setToken, setLoggedIn }) => {
     const classes = useStyles();
 
     const [name, setName] = useState("");
@@ -101,9 +101,11 @@ const Login = ({ signUp: signUpDisplay, loggedIn, setToken, setLoggedIn }) => {
             setFormMessage("Logged in successfully");
             setLoggedIn(true);
             setToken(data.token);
-        } else {
-            setFormMessage(data.message);
+            history.push("/")
+            return;
         }
+
+        setFormMessage(data.message);
     };
 
     const signUp = async () => {
@@ -118,10 +120,10 @@ const Login = ({ signUp: signUpDisplay, loggedIn, setToken, setLoggedIn }) => {
         if (res.status == 201) {
             setFormMessage("Account created successfully");
             return true;
-        } else {
-            setFormMessage(data.message);
-            return false;
         }
+
+        setFormMessage(data.message);
+        return false;
     };
 
     return (
