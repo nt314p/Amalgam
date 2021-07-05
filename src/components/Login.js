@@ -117,7 +117,7 @@ const Login = ({ history, signUp: signUpDisplay, loggedIn, setToken, setLoggedIn
             body: JSON.stringify({ name, username, password })
         })
         const data = await res.json();
-        if (res.status == 201) {
+        if (res.status === 201) {
             setFormMessage("Account created successfully");
             return true;
         }

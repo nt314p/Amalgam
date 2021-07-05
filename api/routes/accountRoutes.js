@@ -29,7 +29,6 @@ router.post("/",
 );
 
 router.post("/login", async (req, res) => {
-    console.log(req.body);
     if (await Accounts.isUniqueUsername(req.body.username)) {
         return res.status(401).json({ message: "Username or password is incorrect" });
     }

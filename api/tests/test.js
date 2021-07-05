@@ -7,7 +7,6 @@ const Notebook = require("../models/notebook");
 const Note = require("../models/note");
 const NoteContent = require("../models/noteContent");
 
-
 const mongoose = require('mongoose');
 require('dotenv').config();
 
@@ -20,8 +19,7 @@ mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
     })
     .catch(error => console.log("Cannot connect to database: " + error));
 
-var server =
-    app.listen(PORT, console.log('Server is running on port:', PORT));
+var server = app.listen(PORT, console.log('Server is running on port:', PORT));
 
 async function createTestAccount() {
     let account = new Account({
@@ -31,6 +29,23 @@ async function createTestAccount() {
         hashedPassword: "$2b$12$m7flIjsGhcyV/SV12rcHe.W3tsCSPIkh1J5cCFN.N4JDvBzVO.wB6"
     });
     return await account.save();
+}
+
+async function loginToTestAccount() {
+    const loginRes = await request
+        .post('/accounts/login/')
+        .send({ username: "testaccount@88", password: "TESTpass123!" });
+
+    return { id: loginRes.body.id, token: loginRes.body.token };
+}
+
+async function createTestNotebook(accountId, token) {
+    const res = await request
+        .post(`/accounts/${accountId}/notebooks/`)
+        .set('authorization', `Bearer ${token}`)
+        .send({ name: "Test notebook" });
+
+    return res.notebook;
 }
 
 async function cleanTestDatabase() {
@@ -116,12 +131,7 @@ describe('Authorization', () => {
     test('protected route with correct token succeeds', async () => {
         await createTestAccount();
 
-        const loginRes = await request
-            .post('/accounts/login/')
-            .send({ username: "testaccount@88", password: "TESTpass123!" })
-
-        let token = loginRes.body.token;
-        let id = loginRes.body.id;
+        let { token, id } = await loginToTestAccount();
 
         const res = await request
             .get(`/accounts/${id}/`)
@@ -201,12 +211,7 @@ describe('Account routes', () => {
     test('account get route returns correct data', async (done) => {
         await createTestAccount();
 
-        const loginRes = await request
-            .post('/accounts/login/')
-            .send({ username: "testaccount@88", password: "TESTpass123!" })
-
-        let token = loginRes.body.token;
-        let id = loginRes.body.id;
+        let { token, id } = await loginToTestAccount();
 
         const res = await request
             .get(`/accounts/${id}/`)
@@ -225,12 +230,7 @@ describe('Account routes', () => {
     test('account is successfully deleted', async (done) => {
         await createTestAccount();
 
-        const loginRes = await request
-            .post('/accounts/login/')
-            .send({ username: "testaccount@88", password: "TESTpass123!" })
-
-        let token = loginRes.body.token;
-        let id = loginRes.body.id;
+        let { token, id } = await loginToTestAccount();
 
         expect(await Account.findById(id)).toBeDefined();
 
@@ -245,5 +245,47 @@ describe('Account routes', () => {
         done();
     });
 });
+
+describe('Notebook routes', () => {
+    test('created notebook returns correct data', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+
+        const res = await request
+            .post(`/accounts/${id}/notebooks/`)
+            .set('authorization', `Bearer ${token}`)
+            .send({ name: "Test notebook" })
+            .expect(201);
+
+        expect(res.body).toHaveProperty("notebook");
+        expect(res.body.notebook.name).toBe("Test notebook");
+        expect(res.body.notebook.owner).toBe(id);
+        expect(res.body.notebook).toHaveProperty("_id");
+        done();
+    });
+
+    test('notebook get route returns correct data', async (done) => {
+
+        // check for notebook get route
+
+        // check for notebook document
+
+        done();
+    });
+
+    test('notebook get all route returns correct data', async (done) => {
+        // check with account with no notebooks
+
+        // check with account with notebooks
+        
+        done();
+    })
+
+    // delete notebook test
+    test('notebook is successfully deleted', async (done) => {
+
+        done();
+    })
+})
 
 server.close();

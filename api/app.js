@@ -5,13 +5,12 @@
 require('dotenv').config();
 const accountRoutes = require("./routes/accountRoutes");
 const express = require('express');
-const bodyParser = require('body-parser');
 const expressValidator = require('express-validator');
 const Accounts = require('./database/accounts');
 const app = express();
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
