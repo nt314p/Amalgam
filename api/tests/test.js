@@ -45,7 +45,7 @@ async function createTestNotebook(accountId, token) {
         .set('authorization', `Bearer ${token}`)
         .send({ name: "Test notebook" });
 
-    return res.notebook;
+    return res.body.notebook;
 }
 
 async function cleanTestDatabase() {
@@ -58,6 +58,8 @@ async function cleanTestDatabase() {
 
 afterEach(cleanTestDatabase);
 
+
+/*
 describe('POST /checkUniqueUsername', () => {
     test('responds with a true result when username is unique', async () => {
         const res = await request
@@ -265,27 +267,131 @@ describe('Notebook routes', () => {
     });
 
     test('notebook get route returns correct data', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+        let notebook = await createTestNotebook(id, token);
 
-        // check for notebook get route
+        const res = await request
+            .get(`/accounts/${id}/notebooks/${notebook._id}`)
+            .set('authorization', `Bearer ${token}`)
+            .expect(200);
 
-        // check for notebook document
-
+        expect(res.body).toHaveProperty("notebook");
+        expect(res.body.notebook.name).toBe("Test notebook");
+        expect(res.body.notebook.owner).toBe(id);
+        expect(res.body.notebook._id).toBe(notebook._id);
         done();
     });
 
-    test('notebook get all route returns correct data', async (done) => {
-        // check with account with no notebooks
+    test('notebook get all route returns correct data no notebooks', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
 
-        // check with account with notebooks
-        
+        let res = await request
+            .get(`/accounts/${id}/notebooks/`)
+            .set('authorization', `Bearer ${token}`)
+            .expect(200);
+
+        expect(res.body).toHaveProperty("notebooks");
+        expect(res.body.notebooks).toHaveLength(0);
+
+        done();
+    })
+
+    test('notebook get all route returns correct data with notebooks', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+
+        const notebookA = (await request
+            .post(`/accounts/${id}/notebooks/`)
+            .set('authorization', `Bearer ${token}`)
+            .send({ name: "Notebook A" }))
+            .body.notebook;
+
+        const notebookB = (await request
+            .post(`/accounts/${id}/notebooks/`)
+            .set('authorization', `Bearer ${token}`)
+            .send({ name: "Notebook B" }))
+            .body.notebook;
+
+        const res = await request
+            .get(`/accounts/${id}/notebooks/`)
+            .set('authorization', `Bearer ${token}`)
+            .expect(200);
+
+        expect(res.body).toHaveProperty("notebooks");
+        expect(res.body.notebooks).toHaveLength(2);
+        expect(res.body.notebooks).toContainEqual(notebookA);
+        expect(res.body.notebooks).toContainEqual(notebookB);
+
         done();
     })
 
     // delete notebook test
     test('notebook is successfully deleted', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+
+        let notebook = await createTestNotebook(id, token);
+        let notebookId = notebook._id;
+
+        expect(await Notebook.findById(notebookId)).toBeDefined();
+
+        const res = await request
+            .delete(`/accounts/${id}/notebooks/${notebookId}`)
+            .set('authorization', `Bearer ${token}`)
+            .send()
+            .expect(200);
+
+        expect(await Notebook.findById(notebookId)).toBeNull();
 
         done();
-    })
-})
+    });
+});
+
+*/
+
+describe('Note routes', () => {
+    test('created note returns correct data', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+        let notebook = await createTestNotebook(id, token);
+
+        const res = await request
+            .post(`/accounts/${id}/notebooks/${notebook._id}/notes/`)
+            .set('authorization', `Bearer ${token}`)
+            .send({ title: "Test note", content: "Test content!", starred: true })
+            .expect(201);
+
+        console.log(res.body.note);
+        expect(res.body).toHaveProperty("note");
+        expect(res.body.note.title).toBe("Test note");
+        expect(res.body.note.starred).toBe(true);
+        expect(res.body.note.owner).toBe(id);
+        expect(res.body.note).toHaveProperty("_id");
+
+        done();
+    });
+
+    test('created note is added to notebook', async (done) => {
+
+        done();
+    });
+
+    test('note get route returns correct data', async (done) => {
+
+        done();
+    });
+
+    test('note is successfully updated', async (done) => {
+
+        done();
+    });
+
+    test('note is successfully deleted', async (done) => {
+
+        done();
+    });
+});
 
 server.close();

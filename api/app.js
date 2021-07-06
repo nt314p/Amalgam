@@ -19,7 +19,7 @@ app.use((req, res, next) => {
         "Origin, X-Requested-With, Content-Type, Accept, Authorization"
     );
     if (req.method === "OPTIONS") {
-        res.header("Access-Control-Allow-Methods", "PUT, POST, PATCH, DELETE, GET");
+        res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
         return res.sendStatus(200);
     }
     next();
@@ -30,14 +30,19 @@ app.post("/checkUniqueUsername", checkUniqueUsername);
 app.use("/accounts", accountRoutes);
 1
 app.use((req, res, next) => {
-    const error = new Error("Not found");
+    let path = req.method + " " + req.url;
+    const error = new Error("Not found: " + path);
     error.status = 404;
     next(error);
 });
 
 app.use((error, req, res, next) => {
     res.status(error.status || 500);
-    if (process.env.NODE_ENV == "development") console.log(error);
+    if (process.env.NODE_ENV == "development" || process.env.NODE_ENV == "test") {
+        console.log(error);
+        //console.error(error.stack);
+        //console.trace();
+    }
     if (process.env.NODE_ENV != "production") {
         res.json({
             error

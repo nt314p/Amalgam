@@ -24,7 +24,7 @@ module.exports = {
         const note = new Note({
             _id: new mongoose.Types.ObjectId(),
             title: noteData.title,
-            content: noteContent,
+            content: noteContent._id,
             owner: noteData.accountId,
             notebook: noteData.notebookId,
             created: Date.now(),
@@ -33,11 +33,10 @@ module.exports = {
             edited: Date.now()
         });
 
-        noteContent.note = note;
-
+        noteContent.note = note._id;
         await noteContent.save();
-        const createdNote = await note.save();
 
+        const createdNote = await note.save();
         return createdNote;
     },
 
@@ -53,7 +52,7 @@ module.exports = {
         noteContent.content = newNote.content;
         await noteContent.save();
 
-        let oldNote = await this.getById(id);
+        let oldNote = await Note.findById(id);
         oldNote.title = newNote.title;
         oldNote.tags = newNote.tags;
         oldNote.starred = newNote.starred;
@@ -63,19 +62,21 @@ module.exports = {
     },
 
     deleteById: async (id) => {
-        let deletedNote = await this.getById(id);
+        let deletedNote = await Note.findById(id);
         await Notebooks.removeNote(deletedNote.notebook, deletedNote._id);
         await Note.findByIdAndDelete(id);
     },
 
     setNotebook: async (noteId, notebookId) => {
-        let note = await this.getById(noteId);
+        let note = await Note.findById(noteId);
         note.notebook = notebookId;
+        console.log("saving...");
         await note.save();
+        console.log("saved!");
     },
 
     hasNotebook: async (noteId) => {
-        let note = await this.getById(noteId);
+        let note = await Note.findById(noteId);
         return note.notebook != undefined;
     }
 };

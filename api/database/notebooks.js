@@ -33,6 +33,12 @@ module.exports = {
         await Notebook.findByIdAndDelete(id);
     },
 
+    getNotes: async (notebookId) => {
+        let notebook = await Notebook.findById(notebookId);
+        let populated = await notebook.populate({ path: "notes" }).execPopulate();
+        return populated.notes;
+    },
+
     addNote: async (notebookId, noteId) => {
         let notebook = await Notebook.findById(notebookId);
         notebook.notes.push(noteId);

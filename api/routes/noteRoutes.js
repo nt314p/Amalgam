@@ -12,10 +12,19 @@ router.post("/", async (req, res, next) => {
 
         let note = await Notes.create(noteData);
         await Notebooks.addNote(req.notebookId, note._id);
-
         res.status(201).json({
             message: "Note created and added to notebook", note
         });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// get all notes
+router.get("/", async (req, res, next) => {
+    try {
+        let notes = await Notebooks.getNotes(req.notebookId);
+        res.status(200).json({ notes });
     } catch (err) {
         next(err);
     }
