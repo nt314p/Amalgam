@@ -8,6 +8,7 @@ const Note = require("../models/note");
 const NoteContent = require("../models/noteContent");
 
 const mongoose = require('mongoose');
+const ObjectId = mongoose.Types.ObjectId;
 require('dotenv').config();
 
 const uri = process.env.DB_TESTING_URI;
@@ -23,7 +24,7 @@ var server = app.listen(PORT, console.log('Server is running on port:', PORT));
 
 async function createTestAccount() {
     let account = new Account({
-        _id: new mongoose.Types.ObjectId(),
+        _id: new ObjectId(),
         username: "testaccount@88",
         name: "Test Account",
         hashedPassword: "$2b$12$m7flIjsGhcyV/SV12rcHe.W3tsCSPIkh1J5cCFN.N4JDvBzVO.wB6"
@@ -48,6 +49,15 @@ async function createTestNotebook(accountId, token) {
     return res.body.notebook;
 }
 
+async function createTestNote(accountId, notebookId, token) {
+    const res = await request
+        .post(`/accounts/${accountId}/notebooks/${notebookId}/notes/`)
+        .set('authorization', `Bearer ${token}`)
+        .send({ title: "Test note", content: "Test content!", starred: true });
+
+    return res.body.note;
+}
+
 async function cleanTestDatabase() {
     if (mongoose.connection.name != "testing") return; // haha that would be bad
     await Account.deleteMany();
@@ -58,8 +68,6 @@ async function cleanTestDatabase() {
 
 afterEach(cleanTestDatabase);
 
-
-/*
 describe('POST /checkUniqueUsername', () => {
     test('responds with a true result when username is unique', async () => {
         const res = await request
@@ -349,8 +357,6 @@ describe('Notebook routes', () => {
     });
 });
 
-*/
-
 describe('Note routes', () => {
     test('created note returns correct data', async (done) => {
         await createTestAccount();
@@ -363,32 +369,203 @@ describe('Note routes', () => {
             .send({ title: "Test note", content: "Test content!", starred: true })
             .expect(201);
 
-        console.log(res.body.note);
+        let note = res.body.note;
+
         expect(res.body).toHaveProperty("note");
-        expect(res.body.note.title).toBe("Test note");
-        expect(res.body.note.starred).toBe(true);
-        expect(res.body.note.owner).toBe(id);
-        expect(res.body.note).toHaveProperty("_id");
+        expect(note.title).toBe("Test note");
+        expect(note.starred).toBe(true);
+        expect(note.owner).toBe(id);
+        expect(note.notebook).toBe(notebook._id);
+        expect(note).toHaveProperty("_id");
 
         done();
     });
 
     test('created note is added to notebook', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+        let notebook = await createTestNotebook(id, token);
+
+        const res = await request
+            .post(`/accounts/${id}/notebooks/${notebook._id}/notes/`)
+            .set('authorization', `Bearer ${token}`)
+            .send({ title: "Test note", content: "Test content!", starred: true })
+            .expect(201);
+
+        expect(res.body.note.notebook).toBe(notebook._id);
+
+        let updatedNotebook = await Notebook.findById(notebook._id);
+
+        expect(updatedNotebook.notes).toHaveLength(1);
+        expect(updatedNotebook.notes).toContainEqual(new ObjectId(res.body.note._id));
+        done();
+    });
+
+    test('note get route with content not populated returns correct data', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+        let notebook = await createTestNotebook(id, token);
+        let testNote = await createTestNote(id, notebook._id, token);
+
+        const res = await request
+            .get(`/accounts/${id}/notebooks/${notebook._id}/notes/${testNote._id}`)
+            .set('authorization', `Bearer ${token}`)
+            .send({ populate: false })
+            .expect(200);
+
+        let note = res.body.note;
+
+        expect(res.body).toHaveProperty("note");
+        expect(note.title).toBe("Test note");
+        expect(note.starred).toBe(true);
+        expect(note.owner).toBe(id);
+        expect(note.notebook).toBe(notebook._id);
+        expect(note._id).toBe(testNote._id);
 
         done();
     });
 
-    test('note get route returns correct data', async (done) => {
+    test('note get route with content populated returns correct data', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+        let notebook = await createTestNotebook(id, token);
+        let testNote = await createTestNote(id, notebook._id, token);
+
+        const res = await request
+            .get(`/accounts/${id}/notebooks/${notebook._id}/notes/${testNote._id}`)
+            .set('authorization', `Bearer ${token}`)
+            .send({ populate: true })
+            .expect(200);
+
+        let note = res.body.note;
+
+        console.log(note);
+
+        expect(res.body).toHaveProperty("note");
+        expect(note.title).toBe("Test note");
+        expect(note.starred).toBe(true);
+        expect(note.owner).toBe(id);
+        expect(note.notebook).toBe(notebook._id);
+        expect(note).toHaveProperty("content");
+        expect(note.content).toBe("Test content!");
+        expect(note._id).toBe(testNote._id);
 
         done();
     });
 
     test('note is successfully updated', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+        let notebook = await createTestNotebook(id, token);
+        let testNote = await createTestNote(id, notebook._id, token);
+
+        let noteContentId = (await Note.findById(testNote._id)).content;
+        let originalNoteContent = (await NoteContent.findById(noteContentId)).content;
+        expect(originalNoteContent).toBe("Test content!");
+        expect(testNote.title).toBe("Test note");
+        expect(testNote.tags).toHaveLength(0);
+        expect(testNote.starred).toBe(true);
+        let previousEditDate = testNote.edited;
+
+        const res = await request
+            .put(`/accounts/${id}/notebooks/${notebook._id}/notes/${testNote._id}`)
+            .set('authorization', `Bearer ${token}`)
+            .send({ title: "This 123 is a new title", content: "This is new content?!", tags: ["test", "todo"], starred: false })
+            .expect(200);
+
+        expect(res.body).toHaveProperty("note");
+
+        let note = await Note.findById(res.body.note._id);
+
+        expect(note.title).toBe("This 123 is a new title");
+        expect((await NoteContent.findById(note.content)).content).toBe("This is new content?!");
+        expect(note.tags.toObject()).toStrictEqual(["test", "todo"]);
+        expect(note.starred).toBe(false);
+        expect(note.edited.toISOString()).not.toBe(previousEditDate);
 
         done();
     });
 
     test('note is successfully deleted', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+        let notebook = await createTestNotebook(id, token);
+        let testNote = await createTestNote(id, notebook._id, token);
+
+        expect(await Note.findById(testNote._id)).toBeDefined();
+
+        const res = await request
+            .delete(`/accounts/${id}/notebooks/${notebook._id}/notes/${testNote._id}`)
+            .set('authorization', `Bearer ${token}`)
+            .send()
+            .expect(200);
+
+        expect(await Note.findById(testNote._id)).toBeNull();
+        done();
+    });
+
+    test('note is removed from notebook when deleted', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+        let notebook = await createTestNotebook(id, token);
+        let testNote = await createTestNote(id, notebook._id, token);
+
+        expect((await Notebook.findById(notebook._id)).notes).toContainEqual(new ObjectId(testNote._id));
+
+        const res = await request
+            .delete(`/accounts/${id}/notebooks/${notebook._id}/notes/${testNote._id}`)
+            .set('authorization', `Bearer ${token}`)
+            .send()
+            .expect(200);
+
+        expect((await Notebook.findById(notebook._id)).notes).not.toContainEqual(new ObjectId(testNote._id));
+        done();
+    });
+
+    test('note is successfully moved when given proper target notebook', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+        let notebook = await createTestNotebook(id, token);
+        let testNote = await createTestNote(id, notebook._id, token);
+
+        let targetNotebook = (await request
+            .post(`/accounts/${id}/notebooks/`)
+            .set('authorization', `Bearer ${token}`)
+            .send({ name: "Target notebook" })).body.notebook;
+
+        let originalNotebook = await Notebook.findById(notebook._id);
+
+        // check that note's notebook is original notebook
+        expect(testNote.notebook).toBe(originalNotebook._id.toString());
+        // check that original notebook contains note
+        expect(originalNotebook.notes).toContainEqual(new ObjectId(testNote._id));
+        // check that target notebook does not note
+        expect(targetNotebook.notes).not.toContainEqual(testNote._id);
+
+        // move
+        const res = await request
+            .post(`/accounts/${id}/notebooks/${notebook._id}/notes/${testNote._id}/move`)
+            .set('authorization', `Bearer ${token}`)
+            .send({ targetNotebookId: targetNotebook._id })
+            .expect(200);
+
+        let movedNote = await Note.findById(testNote._id);
+        let movedTargetNotebook = await Notebook.findById(targetNotebook._id);
+        let movedOriginalNotebook = await Notebook.findById(notebook._id);
+
+        // check that note's notebook is target notebook
+        expect(movedNote.notebook.toString()).toBe(movedTargetNotebook._id.toString());
+        // check that target notebook contains note
+        expect(movedTargetNotebook.notes).toContainEqual(movedNote._id);
+        // check that original notebook does not contain note
+        expect(movedOriginalNotebook.notes).not.toContainEqual(movedNote._id);
+
+        done();
+    });
+
+    test('note is not moved and returns 403 when target notebook is not owned', async (done) => {
+
+
 
         done();
     });

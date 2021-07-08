@@ -2,6 +2,20 @@ const mongoose = require("mongoose");
 const Notebook = require("../models/notebook");
 const Notes = require("./notes");
 
+async function addNote(notebookId, noteId) {
+    let notebook = await Notebook.findById(notebookId);
+    notebook.notes.push(noteId);
+    await notebook.save();
+    await Notes.setNotebook(noteId, notebookId);
+}
+
+async function removeNote(notebookId, noteId) {
+    let notebook = await Notebook.findById(notebookId);
+    notebook.notes.pull(noteId);
+    await notebook.save();
+    await Notes.setNotebook(noteId, undefined);
+}
+
 module.exports = {
     exists: async (id) => {
         if (!mongoose.Types.ObjectId.isValid(id)) return false;
@@ -39,23 +53,14 @@ module.exports = {
         return populated.notes;
     },
 
-    addNote: async (notebookId, noteId) => {
-        let notebook = await Notebook.findById(notebookId);
-        notebook.notes.push(noteId);
-        await notebook.save();
-        await Notes.setNotebook(noteId, notebookId);
-    },
+    addNote,
 
-    removeNote: async (notebookId, noteId) => {
-        let notebook = await Notebook.findById(notebookId);
-        notebook.notes.pull(noteId);
-        await notebook.save();
-        await Notes.setNotebook(noteId, undefined);
-    },
+    removeNote,
 
     moveNote: async (oldNotebookId, newNotebookId, noteId) => {
-        await this.removeNote(oldNotebookId, noteId);
-        await this.addNote(newNotebookId, noteId);
+        console.log({ oldNotebookId, newNotebookId, noteId });
+        await removeNote(oldNotebookId, noteId);
+        await addNote(newNotebookId, noteId);
     }
 };
 

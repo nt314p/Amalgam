@@ -3,10 +3,6 @@ const Note = require("../models/note");
 const NoteContent = require("../models/noteContent");
 const Notebooks = require("./notebooks");
 
-async function getNoteContentById(id) {
-    return await NoteContent.findById(id);
-}
-
 module.exports = {
     exists: async (id) => {
         if (!mongoose.Types.ObjectId.isValid(id))
@@ -42,13 +38,20 @@ module.exports = {
 
     getById: async (id, populate) => {
         let note = await Note.findById(id);
-        if (!populate)
+        if (populate !== true) {
+            note.content = undefined;
             return note;
-        return await note.populate("content").execPopulate();
+        }
+        
+        note = await note.populate("content").execPopulate();
+        note = note.toObject();
+        note.content = note.content.content;
+        return note;
     },
 
     updateById: async (id, newNote) => {
-        let noteContent = await getNoteContentById(id);
+        let note = await Note.findById(id);
+        let noteContent = await NoteContent.findById(note.content);
         noteContent.content = newNote.content;
         await noteContent.save();
 
@@ -63,16 +66,14 @@ module.exports = {
 
     deleteById: async (id) => {
         let deletedNote = await Note.findById(id);
-        await Notebooks.removeNote(deletedNote.notebook, deletedNote._id);
-        await Note.findByIdAndDelete(id);
+        await NoteContent.findByIdAndDelete(deletedNote.content);
+        await deletedNote.delete();
     },
 
     setNotebook: async (noteId, notebookId) => {
         let note = await Note.findById(noteId);
         note.notebook = notebookId;
-        console.log("saving...");
         await note.save();
-        console.log("saved!");
     },
 
     hasNotebook: async (noteId) => {
