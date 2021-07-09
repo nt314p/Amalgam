@@ -563,9 +563,40 @@ describe('Note routes', () => {
         done();
     });
 
+    test('note is not moved and returns 400 when target notebook is the current notebook', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+        let notebook = await createTestNotebook(id, token);
+        let testNote = await createTestNote(id, notebook._id, token);
+
+        const res = await request
+            .post(`/accounts/${id}/notebooks/${notebook._id}/notes/${testNote._id}/move`)
+            .set('authorization', `Bearer ${token}`)
+            .send({ targetNotebookId: notebook._id })
+            .expect(400);
+
+        done();
+    });
+
     test('note is not moved and returns 403 when target notebook is not owned', async (done) => {
+        await createTestAccount();
+        let { token, id } = await loginToTestAccount();
+        let notebook = await createTestNotebook(id, token);
+        let testNote = await createTestNote(id, notebook._id, token);
 
+        let otherNotebook = new Notebook({
+            _id: new mongoose.Types.ObjectId(),
+            name: "Other notebook",
+            notes: [],
+            owner: new mongoose.Types.ObjectId()
+        });
+        await otherNotebook.save();
 
+        const res = await request
+            .post(`/accounts/${id}/notebooks/${notebook._id}/notes/${testNote._id}/move`)
+            .set('authorization', `Bearer ${token}`)
+            .send({ targetNotebookId: otherNotebook._id })
+            .expect(403);
 
         done();
     });
