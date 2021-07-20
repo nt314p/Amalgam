@@ -8,4 +8,4 @@ const notebookSchema = Schema({
     owner: { type: Schema.Types.ObjectId, ref: 'Account' }
 });
 
-module.exports = mongoose.model('Notebook', notebookSchema);
+module.exports = mongoose.model('Notebook', notebookSchema, 'notebooks');

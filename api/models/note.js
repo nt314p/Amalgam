@@ -13,4 +13,4 @@ const noteSchema = mongoose.Schema({
     edited: { type: Date, default: Date.now() }
 });
 
-module.exports = mongoose.model('Note', noteSchema);
+module.exports = mongoose.model('Note', noteSchema, 'notes');

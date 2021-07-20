@@ -11,12 +11,16 @@ const mongoose = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId;
 require('dotenv').config();
 
-const uri = process.env.DB_TESTING_URI;
+const uri = process.env.DB_TESTING_URI_LOCAL;
 const PORT = process.env.PORT || 4000;
 
 mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => {
+    .then(async () => {
         console.log("Database is connected");
+        if (mongoose.connection.name != "testing") {
+
+            throw new Exception("Not running on testing database!");
+        }
     })
     .catch(error => console.log("Cannot connect to database: " + error));
 

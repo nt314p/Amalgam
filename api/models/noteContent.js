@@ -8,4 +8,4 @@ const noteContentSchema = Schema({
     owner: { type: Schema.Types.ObjectId, ref: 'Account' }
 });
 
-module.exports = mongoose.model('NoteContent', noteContentSchema);
+module.exports = mongoose.model('NoteContent', noteContentSchema, 'notecontents');

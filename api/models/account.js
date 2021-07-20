@@ -9,4 +9,4 @@ const accountSchema = Schema({
     notebooks: [{ type: Schema.Types.ObjectId, ref: 'Notebook', default: [] }],
 });
 
-module.exports = mongoose.model('Account', accountSchema);
+module.exports = mongoose.model('Account', accountSchema, 'accounts');
