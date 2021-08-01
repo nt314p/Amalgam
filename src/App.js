@@ -7,7 +7,7 @@ import NotFound404 from "./components/NotFound404";
 const App = () => {
 
   const [token, setToken] = useState(null);
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(true);
 
   return (
     <BrowserRouter>
